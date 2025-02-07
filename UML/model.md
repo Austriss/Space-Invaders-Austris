@@ -10,15 +10,15 @@ classDiagram
     }
 
     class Player {
-        +x: float
-        +y: float
+        +x: int
+        +y: int
         +speed: float
         +direction: EnumObjectDirection
     }
 
     class Alien {
-        +x: float
-        +y: float
+        +x: int
+        +y: int
         +speed: float
         +direction: EnumObjectDirection
         +fire_rate: float
@@ -37,8 +37,8 @@ classDiagram
     }
 
     class Bullet {
-        +x: float
-        +y: float
+        +x: int
+        +y: int
         +speed: float
         +direction: EnumObjectDirection
     }

@@ -9,8 +9,7 @@ classDiagram
     }
 
     class PlayerController {
-        move_left(player: Player, delta_time: float)
-        move_right(player: Player, delta_time: float)
+        move(player: Player, direction: EnumObjectDirection, delta_time: float)
         shoot(bullet: Bullet)
     }
 
