@@ -5,7 +5,7 @@ from typing import List
 #from dataclasses_json import dataclass_json
 
 #@dataclass_json
-@dataclass
+#@dataclass
 class Game:
     game_objects: List[GameObject] = field(default=list)
     map_size: tuple[int, int] = (15, 15)

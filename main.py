@@ -37,17 +37,11 @@ class Main:
                 if event.type == pygame.QUIT:
                     self.is_game_running = False
 
-            # get delta seconds
-#            time_current = pygame.time.get_ticks()
-#            delta_milisec = time_current - time_last
-#            time_last = time_current
-#
-#            self.update(delta_milisec)
+
 
             self.draw()
 
             pygame.display.flip()
-#            time.sleep(0.01)
 
         pygame.quit()
 
