@@ -1,0 +1,9 @@
+name: pygame
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python=3.13
+  - pygame=2.6.1

@@ -1,26 +1,21 @@
 ```mermaid
 classDiagram
-    class GameModel {
-        +player: Player
-        +aliens: Alien
-        +bullets: Bullet
-        +score: int
-        +lives: int
-        +level: int
+    class GameObject {
+        +position: [int, int]
+        +object_type: enum_object_type
+        +direction: enum_object_direction
     }
 
     class Player {
-        +x: int
-        +y: int
+        +position: [int, int]
         +speed: float
-        +direction: EnumObjectDirection
+        +direction: enum_object_direction
     }
 
     class Alien {
-        +x: int
-        +y: int
+        +position: [int, int]
         +speed: float
-        +direction: EnumObjectDirection
+        +direction: enum_object_direction
         +fire_rate: float
     }
 
@@ -37,30 +32,29 @@ classDiagram
     }
 
     class Bullet {
-        +x: int
-        +y: int
+        +position: [int, int]
         +speed: float
-        +direction: EnumObjectDirection
+        +direction: enum_object_direction
     }
 
-    class EnumObjectDirection {
+    class enum_object_direction {
         +Up
         +Down
         +Left
         +Right
     }
 
-    GameModel o-- Player 
-    GameModel o-- Alien 
-    GameModel o-- Bullet 
-    GameModel o-- UFO 
+    GameObject o-- Player 
+    GameObject o-- Alien 
+    GameObject o-- Bullet 
+    GameObject o-- UFO 
     
     Alien o-- Type1Alien
     Alien o-- Type2Alien
     Alien o-- UFO
     
 
-    Player o-- EnumObjectDirection 
-    Alien o-- EnumObjectDirection 
-    Bullet o-- EnumObjectDirection 
+    Player o-- enum_object_direction 
+    Alien o-- enum_object_direction 
+    Bullet o-- enum_object_direction 
 ```

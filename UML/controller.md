@@ -1,11 +1,11 @@
 ```mermaid
 classDiagram
-    class GameController {
-        new_game()(game: GameModel)
-        update(game: GameModel, delta_time: float)
-        check_collisions(game: GameModel, delta_time: float)
-        save_game(game: GameModel)
-        load_game()(game: GameModel)
+    class ControllerGame {
+        new_game()(game: GameObject)
+        update(game: GameObject, delta_time: float)
+        check_collisions(game: GameObject, delta_time: float)
+        save_game(game: GameObject)
+        load_game()(game: GameObject)
     }
 
     class PlayerController {
@@ -18,7 +18,7 @@ classDiagram
     }
 
 
-    GameController o-- GameModel : controls
+    ControllerGame o-- GameObject : controls
     PlayerController o-- Player : controls
     AlienController o-- Alien : controls
   
