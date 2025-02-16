@@ -11,3 +11,5 @@ class Game:
     map_size: tuple[int, int] = (15, 15)
     score: int = 0
     cell_size: int = 32
+    direction_change: bool = False
+    move_down: bool = False

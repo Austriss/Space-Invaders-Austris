@@ -56,10 +56,10 @@ class ControllerGame():
 
 
             for alien in aliens:
-                if EnumObjectDirection.Left:
-                    alien.direction = EnumObjectDirection.Right
-                elif EnumObjectDirection.Right:
+                if alien.direction == EnumObjectDirection.Right:
                     alien.direction = EnumObjectDirection.Left
+                elif alien.direction == EnumObjectDirection.Left:
+                    alien.direction = EnumObjectDirection.Right
 
         elif not border_check:
             self.direction_change = False
