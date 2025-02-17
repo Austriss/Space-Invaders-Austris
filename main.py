@@ -44,7 +44,7 @@ class Main:
                 self.alien_controllers.append(ControllerAlien(game_object))
                 self.alien_components.append(ComponentAlien(game_object))
                 
-
+    
         self.is_game_running = True
         self.show()
 
@@ -53,13 +53,19 @@ class Main:
         time_last = pygame.time.get_ticks()
 
         while self.is_game_running:
+            delta_milisec = pygame.time.get_ticks() - time_last
+            time_last = pygame.time.get_ticks()
+
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_game_running = False
-
-            time_current = pygame.time.get_ticks()
-            delta_milisec = time_current - time_last
-            time_last = time_current
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        for game_object in self.game.game_objects:
+                            if game_object.game_object_type == EnumObjectType.Player:
+                                ControllerPlayer.fire(game_object, self.game.game_objects, self.game) 
+                    
 
             self.update(delta_milisec)
 
@@ -74,7 +80,11 @@ class Main:
         self.controller.update(delta_milisec)
 
         for controller in self.alien_controllers:
-            controller.update(self.game, delta_milisec)
+            if controller.alien in self.game.game_objects:
+                controller.update(self.game, delta_milisec)
+            else:
+                
+                self.alien_controllers.remove(controller)
 
         for game_object in self.game.game_objects:
             if game_object.game_object_type == EnumObjectType.Player:
@@ -82,7 +92,7 @@ class Main:
 
         for bullet in list(self.game.game_objects):
             if bullet.game_object_type == EnumObjectType.Bullet:
-                ControllerBullet.update(bullet, self.game.game_objects, delta_milisec)
+                ControllerBullet.update(bullet, self.game.game_objects, delta_milisec, self.game) 
                 component_exists = False
                 for bullet_component in self.bullet_components:
                     if bullet_component.game_object == bullet:
@@ -103,14 +113,22 @@ class Main:
         for player in self.player_component:
             player.render(self.screen, self.cell_size)
 
-        for alien in self.alien_components:
-            alien.render(self.screen, self.cell_size)
+        for component in list(self.alien_components):
+            if component.game_object in self.game.game_objects:
+                component.render(self.screen, self.cell_size)
+            else:
+                self.alien_components.remove(component)
         
         for bullet_component in self.bullet_components:
             bullet_component.render(self.screen, self.cell_size)
 
  #       for game_component in self.game_components:
  #           game_component.render(self.screen, self.cell_size) TODO shield
+
+        font = pygame.font.Font(None , 30)
+        score_text = font.render(f"Score: {self.game.score}", True, (255, 255, 255))
+        self.screen.blit(score_text, (10, 10)) 
+
 
 if __name__ == "__main__":
     main = Main()

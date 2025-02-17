@@ -7,19 +7,36 @@ from models.Game import Game
 class ControllerBullet(GameObject):
 
     @staticmethod
-    def update(bullet: GameObject, game_objects: List[GameObject], delta_milisec: float):
+    def update(bullet: GameObject, game_objects: List[GameObject], delta_milisec: float, game: Game):
         
         if bullet.game_object_type == EnumObjectType.Bullet:
-            map_size = Game.map_size
 
             new_position = list(bullet.position) 
-
             new_position[1] -= bullet.movement_speed * delta_milisec
 
             #in game bounds
-            if new_position[1] >= map_size[1]:
-                game_objects.remove(bullet)
-            elif new_position[1] < 0:
-                game_objects.remove(bullet)
-            else:
-                bullet.position = tuple(new_position)
+            if new_position[1] < 0:
+                if bullet in game_objects:
+                    game_objects.remove(bullet)
+                    return
+            bullet.position = tuple(new_position)
+            for object in list(game_objects): 
+                if object.game_object_type in (EnumObjectType.RedAlien, EnumObjectType.GreenAlien):
+                    if ControllerBullet.Collision(bullet, object):
+                        if bullet in game_objects:
+                            game_objects.remove(bullet)
+                        if object in game_objects:
+                            game_objects.remove(object)
+                        game.score += 1
+                        return
+
+    @staticmethod
+    def Collision(bullet: GameObject, alien: GameObject):
+        if (bullet.position[0] < alien.position[0] + 1 and
+            bullet.position[0] + 1 > alien.position[0] and
+            bullet.position[1] < alien.position[1] + 1 and
+            bullet.position[1] + 1 > alien.position[1]):
+            return True
+        return False
+
+    
