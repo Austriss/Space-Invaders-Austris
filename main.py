@@ -33,18 +33,21 @@ class Main:
         self.player_component: List[ComponentPlayer] = []
         self.alien_components: List[ComponentAlien] = []
         self.bullet_components: List[ComponentBullet] = []
-#        self.game_components: List[ComponentGameObject] = []
+#        self.game_components: List[ComponentGameObject] = [] 
         
         self.alien_controllers: List[ControllerAlien] = []
 
         for game_object in self.game.game_objects:
             if game_object.game_object_type == EnumObjectType.Player:
                 self.player_component.append(ComponentPlayer(game_object))
-            if game_object.game_object_type in (EnumObjectType.RedAlien, EnumObjectType.GreenAlien):
+            if game_object.game_object_type in (EnumObjectType.YellowAlien, 
+                                                EnumObjectType.GreenAlien, 
+                                                EnumObjectType.BlueAlien, 
+                                                EnumObjectType.RedAlien):
                 self.alien_controllers.append(ControllerAlien(game_object))
                 self.alien_components.append(ComponentAlien(game_object))
                 
-    
+        self.ufo_controller = None
         self.is_game_running = True
         self.show()
 
@@ -77,14 +80,26 @@ class Main:
         pygame.quit()
 
     def update(self, delta_milisec):
+
         self.controller.update(delta_milisec)
+
+
+        if self.controller.ufo and self.ufo_controller is None:
+            self.ufo_controller = ControllerAlien(self.controller.ufo)
+            component = ComponentAlien(self.controller.ufo)
+            self.alien_components.append(component)
+
+        if self.ufo_controller:
+            self.ufo_controller.update_ufo(self.controller.ufo, self.game, delta_milisec)
 
         for controller in self.alien_controllers:
             if controller.alien in self.game.game_objects:
                 controller.update(self.game, delta_milisec)
             else:
-                
                 self.alien_controllers.remove(controller)
+
+        if not self.controller.ufo and self.ufo_controller:
+            self.ufo_controller = None
 
         for game_object in self.game.game_objects:
             if game_object.game_object_type == EnumObjectType.Player:
@@ -92,7 +107,7 @@ class Main:
 
         for bullet in list(self.game.game_objects):
             if bullet.game_object_type == EnumObjectType.Bullet:
-                ControllerBullet.update(bullet, self.game.game_objects, delta_milisec, self.game) 
+                ControllerBullet.update(bullet, self.game.game_objects, delta_milisec, self.game)
                 component_exists = False
                 for bullet_component in self.bullet_components:
                     if bullet_component.game_object == bullet:
@@ -100,7 +115,7 @@ class Main:
                         break
                 if not component_exists:
                     self.bullet_components.append(ComponentBullet(bullet))
-
+ 
         for bullet_component in list(self.bullet_components):  
             if bullet_component.game_object not in self.game.game_objects:
                 self.bullet_components.remove(bullet_component)
@@ -121,6 +136,11 @@ class Main:
         
         for bullet_component in self.bullet_components:
             bullet_component.render(self.screen, self.cell_size)
+ 
+        if self.controller.ufo:
+             for component in self.alien_components:
+                if component.game_object == self.controller.ufo:
+                    component.render(self.screen, self.cell_size)  
 
  #       for game_component in self.game_components:
  #           game_component.render(self.screen, self.cell_size) TODO shield
