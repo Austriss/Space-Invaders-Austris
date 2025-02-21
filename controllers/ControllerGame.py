@@ -3,13 +3,23 @@ from models.Enum.EnumObjectType import EnumObjectType
 from models.GameObject import GameObject
 from models.Enum.EnumObjectDirection import EnumObjectDirection
 from controllers.ControllerAlien import ControllerAlien
+from models.Observer.Observer import Subject
 import random
 
 
 UFO_INTERVAL_MIN = 15
 UFO_INTERVAL_MAX = 30
-class ControllerGame():
-    
+class ControllerGame(Subject):
+
+    def __init__(self, game: Game):
+        Subject.__init__(self)
+        self.game = game
+        self.move_down = False
+        self.direction_change = False
+        self.ufo_timer = 0
+        self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
+        self.has_ufo = False
+        self.ufo = None    
 
     @staticmethod
     def new_game():
@@ -47,14 +57,7 @@ class ControllerGame():
 
         return game
 
-    def __init__(self, game: Game):
-        self.game = game
-        self.move_down = False
-        self.direction_change = False
-        self.ufo_timer = 0
-        self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
-        self.has_ufo = False
-        self.ufo = None
+
 
     def update(self, delta_milisec: float):
         aliens = [obj for obj in self.game.game_objects if obj.game_object_type in
@@ -63,26 +66,21 @@ class ControllerGame():
 
         border_check = any(alien.position[0] <= 0 or alien.position[0] >= map_width - 1 for alien in aliens)
 
+        #alien direction change if at border
         if border_check and not self.direction_change:
             self.game.move_down = True
-            self.direction_change = True 
-
-            for alien in aliens:
-                if alien.direction == EnumObjectDirection.Right:
-                    alien.direction = EnumObjectDirection.Left
-                elif alien.direction == EnumObjectDirection.Left:
-                    alien.direction = EnumObjectDirection.Right
+            self.direction_change = True
+            self.notify("alien_direction_change") 
 
         elif not border_check:
             self.direction_change = False
-
+        #alien move down after direction change
         if self.game.move_down:
             for alien in aliens:
                 alien.position = (alien.position[0], alien.position[1] + 1)
             self.game.move_down = False
 
-
-        
+        #update ufo spawn
         if self.ufo is None:
             self.ufo_timer += delta_milisec
             if self.ufo_timer >= self.ufo_timer_interval:

@@ -10,15 +10,21 @@ from views.ComponentBullet import ComponentBullet
 from views.ComponentPlayer import ComponentPlayer
 from views.ComponentAlien import ComponentAlien
 from models.Enum.EnumObjectType import EnumObjectType
+from models.Observer.Observer import Subject, Observer
+
 import time
 
-class Main:
+class Main(Observer):
 
     def __init__(self):
+
         pygame.init()
+        
 
         self.game = ControllerGame.new_game()
         self.controller = ControllerGame(self.game)
+
+        self.controller.attach(self)
        
         self.screen_width = 480 # mapsize: 15 * 1 pixel cell: 32
         self.screen_height = 480
@@ -33,7 +39,6 @@ class Main:
         self.player_component: List[ComponentPlayer] = []
         self.alien_components: List[ComponentAlien] = []
         self.bullet_components: List[ComponentBullet] = []
-#        self.game_components: List[ComponentGameObject] = [] 
         
         self.alien_controllers: List[ControllerAlien] = []
 
@@ -44,22 +49,39 @@ class Main:
                                                 EnumObjectType.GreenAlien, 
                                                 EnumObjectType.BlueAlien, 
                                                 EnumObjectType.RedAlien):
-                self.alien_controllers.append(ControllerAlien(game_object))
+                alien_controller = ControllerAlien(game_object) 
+                self.alien_controllers.append(alien_controller) 
+                self.controller.attach(alien_controller) 
                 self.alien_components.append(ComponentAlien(game_object))
                 
+                
+        self.score_text = None
+        self.lives_text = None
         self.ufo_controller = None
+        self.update_display()
         self.is_game_running = True
         self.show()
 
-    def show(self):
+    def update_display(self):
 
+        font = pygame.font.Font(None, 30)
+        score_text = font.render(f"Score: {self.game.score}", True, (255, 255, 255))
+        lives_text = font.render(f"Lives: {self.game.player_lives}", True, (255, 255, 255))
+        self.score_text = score_text
+        self.lives_text = lives_text
+
+
+    def on_event(self, event):
+        if event == "alien_direction_change":
+            self.update_display()
+
+    def show(self):
         time_last = pygame.time.get_ticks()
 
         while self.is_game_running:
             delta_milisec = pygame.time.get_ticks() - time_last
             time_last = pygame.time.get_ticks()
 
-            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_game_running = False
@@ -68,9 +90,8 @@ class Main:
                         for game_object in self.game.game_objects:
                             if game_object.game_object_type == EnumObjectType.Player:
                                 ControllerPlayer.fire(game_object, self.game.game_objects, self.game) 
-                    
 
-            self.update(delta_milisec)
+            self.game_loop_update(delta_milisec)
 
             self.draw()
 
@@ -79,7 +100,9 @@ class Main:
 
         pygame.quit()
 
-    def update(self, delta_milisec):
+
+
+    def game_loop_update(self, delta_milisec):
 
         self.controller.update(delta_milisec)
 
@@ -89,12 +112,12 @@ class Main:
             component = ComponentAlien(self.controller.ufo)
             self.alien_components.append(component)
 
-        if self.ufo_controller:
+        if self.controller.ufo and self.ufo_controller:
             self.ufo_controller.update_ufo(self.controller.ufo, self.game, delta_milisec)
 
         for controller in self.alien_controllers:
             if controller.alien in self.game.game_objects:
-                controller.update(self.game, delta_milisec)
+                controller.game_update(self.game, delta_milisec)
             else:
                 self.alien_controllers.remove(controller)
 
@@ -106,7 +129,7 @@ class Main:
                 ControllerPlayer.update(game_object, self.game.game_objects, delta_milisec, self.game)
 
         for bullet in list(self.game.game_objects):
-            if bullet.game_object_type == EnumObjectType.Bullet:
+            if bullet.game_object_type == EnumObjectType.Bullet or bullet.game_object_type == EnumObjectType.AlienBullet:
                 ControllerBullet.update(bullet, self.game.game_objects, delta_milisec, self.game)
                 component_exists = False
                 for bullet_component in self.bullet_components:
@@ -125,8 +148,10 @@ class Main:
 
     def draw(self):
         self.screen.fill((0, 0, 0))
-        for player in self.player_component:
-            player.render(self.screen, self.cell_size)
+        self.update_display()
+        for component in self.player_component: 
+            if component.game_object in self.game.game_objects:
+                component.render(self.screen, self.cell_size)
 
         for component in list(self.alien_components):
             if component.game_object in self.game.game_objects:
@@ -135,7 +160,9 @@ class Main:
                 self.alien_components.remove(component)
         
         for bullet_component in self.bullet_components:
-            bullet_component.render(self.screen, self.cell_size)
+            if (bullet_component.game_object.game_object_type == EnumObjectType.Bullet or
+    bullet_component.game_object.game_object_type == EnumObjectType.AlienBullet):
+                bullet_component.render(self.screen, self.cell_size)
  
         if self.controller.ufo:
              for component in self.alien_components:
@@ -145,9 +172,12 @@ class Main:
  #       for game_component in self.game_components:
  #           game_component.render(self.screen, self.cell_size) TODO shield
 
-        font = pygame.font.Font(None , 30)
-        score_text = font.render(f"Score: {self.game.score}", True, (255, 255, 255))
-        self.screen.blit(score_text, (10, 10)) 
+        if self.score_text:
+            self.screen.blit(self.score_text, (10, 10))
+        if self.lives_text:
+            self.screen.blit(self.lives_text, (120, 10))
+
+
 
 
 if __name__ == "__main__":
