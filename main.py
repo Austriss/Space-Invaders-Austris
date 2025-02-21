@@ -21,8 +21,9 @@ class Main(Observer):
         pygame.init()
         
 
-        self.game = ControllerGame.new_game()
-        self.controller = ControllerGame(self.game)
+        self.controller = ControllerGame.instance()
+
+        self.game = self.controller.new_game() 
 
         self.controller.attach(self)
        
@@ -105,7 +106,6 @@ class Main(Observer):
     def game_loop_update(self, delta_milisec):
 
         self.controller.update(delta_milisec)
-
 
         if self.controller.ufo and self.ufo_controller is None:
             self.ufo_controller = ControllerAlien(self.controller.ufo)

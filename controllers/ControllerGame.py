@@ -10,30 +10,50 @@ import random
 UFO_INTERVAL_MIN = 15
 UFO_INTERVAL_MAX = 30
 class ControllerGame(Subject):
+    __instance = None
 
-    def __init__(self, game: Game):
+    def __init__(self):
+        if ControllerGame.__instance is not None:
+            raise Exception("ControllerGame singleton")
         Subject.__init__(self)
-        self.game = game
+        self._game: Game = None
+        self.player_controller = None 
+        self.game_objects_controllers = []
         self.move_down = False
         self.direction_change = False
         self.ufo_timer = 0
         self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
         self.has_ufo = False
-        self.ufo = None    
+        self.ufo = None
+        ControllerGame.__instance = self  
 
     @staticmethod
-    def new_game():
+    def instance():
+        if ControllerGame.__instance is None:
+            ControllerGame()
+        return ControllerGame.__instance
 
-        game = Game()
-        game.game_objects = []
+    @property
+    def game(self):
+        return self._game
+    
+    def set_game(self, game):
+        self._game = game
+
+    def new_game(self):
+        game_instance = Game.instance()
+        self._game = game_instance
+
+
+        self._game.game_objects = []
         player = GameObject()
         player.position = (7, 13)
         player.game_object_type = EnumObjectType.Player
-        game.game_objects.append(player)
+        self._game.game_objects.append(player)
 
         ROW_LENGHT = 10
         ROW_COUNT = 3
-        map_width, map_height = game.map_size
+        map_width, map_height = self._game.map_size
 
 
         offset_x = (map_width - ROW_LENGHT) // 2
@@ -53,9 +73,9 @@ class ControllerGame(Subject):
                 obj_game.position = (x + offset_x, y + offset_y)
                 obj_game.direction = EnumObjectDirection.Right
                 obj_game.game_object_type = obj_type
-                game.game_objects.append(obj_game)
+                self._game.game_objects.append(obj_game)
 
-        return game
+        return self._game
 
 
 
