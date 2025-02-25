@@ -86,18 +86,32 @@ class Main(Observer):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.is_game_running = False
+                    break
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         for game_object in self.game.game_objects:
                             if game_object.game_object_type == EnumObjectType.Player:
                                 ControllerPlayer.fire(game_object, self.game.game_objects, self.game) 
 
-            self.game_loop_update(delta_milisec)
+            if not self.game.is_game_over:
+                self.game_loop_update(delta_milisec)
+                self.draw()
+                pygame.display.flip()
+                time.sleep(0.01)
+            else:
+                self.draw()
+                pygame.display.flip()
 
-            self.draw()
-
-            pygame.display.flip()
-            time.sleep(0.01)
+                gameover_loop = True
+                while gameover_loop:
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            gameover_loop = False
+                            self.is_game_running = False
+                        if event.type == pygame.KEYDOWN:
+                            gameover_loop = False
+                            self.is_game_running = False
+                    time.sleep(0.01)
 
         pygame.quit()
 
@@ -147,35 +161,46 @@ class Main(Observer):
 
 
     def draw(self):
-        self.screen.fill((0, 0, 0))
-        self.update_display()
-        for component in self.player_component: 
-            if component.game_object in self.game.game_objects:
-                component.render(self.screen, self.cell_size)
+        if not self.game.is_game_over:
+            self.screen.fill((0, 0, 0))
+            self.update_display()
+            for component in self.player_component: 
+                if component.game_object in self.game.game_objects:
+                    component.render(self.screen, self.cell_size)
 
-        for component in list(self.alien_components):
-            if component.game_object in self.game.game_objects:
-                component.render(self.screen, self.cell_size)
-            else:
-                self.alien_components.remove(component)
-        
-        for bullet_component in self.bullet_components:
-            if (bullet_component.game_object.game_object_type == EnumObjectType.Bullet or
-    bullet_component.game_object.game_object_type == EnumObjectType.AlienBullet):
-                bullet_component.render(self.screen, self.cell_size)
- 
-        if self.controller.ufo:
-             for component in self.alien_components:
-                if component.game_object == self.controller.ufo:
-                    component.render(self.screen, self.cell_size)  
+            for component in list(self.alien_components):
+                if component.game_object in self.game.game_objects:
+                    component.render(self.screen, self.cell_size)
+                else:
+                    self.alien_components.remove(component)
+            
+            for bullet_component in self.bullet_components:
+                if (bullet_component.game_object.game_object_type == EnumObjectType.Bullet or
+        bullet_component.game_object.game_object_type == EnumObjectType.AlienBullet):
+                    bullet_component.render(self.screen, self.cell_size)
+    
+            if self.controller.ufo:
+                for component in self.alien_components:
+                    if component.game_object == self.controller.ufo:
+                        component.render(self.screen, self.cell_size)  
 
- #       for game_component in self.game_components:
- #           game_component.render(self.screen, self.cell_size) TODO shield
+    #       for game_component in self.game_components:
+    #           game_component.render(self.screen, self.cell_size) TODO shield
 
-        if self.score_text:
-            self.screen.blit(self.score_text, (10, 10))
-        if self.lives_text:
-            self.screen.blit(self.lives_text, (120, 10))
+            if self.score_text:
+                self.screen.blit(self.score_text, (10, 10))
+            if self.lives_text:
+                self.screen.blit(self.lives_text, (120, 10))
+        #GameOver screen
+        else:
+            game_over_font = pygame.font.Font(None, 74)
+            game_over_text = game_over_font.render("game over", True, (255, 0, 0))
+            gameover_center = game_over_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
+            self.screen.blit(game_over_text, gameover_center)
+            score_font = pygame.font.Font(None, 74)
+            score_text = score_font.render(f"score: {self.game.score}", True, (255, 0, 0))
+            score_center = score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2 + 50))
+            self.screen.blit(score_text, score_center)
 
 
 
