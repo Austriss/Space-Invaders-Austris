@@ -4,6 +4,7 @@ from models.GameObject import GameObject
 from models.Enum.EnumObjectDirection import EnumObjectDirection
 from controllers.ControllerAlien import ControllerAlien
 from models.Observer.Observer import Subject
+from views.factories.GameObjectFactory import GameObjectFactory
 import random
 
 
@@ -17,14 +18,10 @@ class ControllerGame(Subject):
             raise Exception("ControllerGame singleton")
         Subject.__init__(self)
         self._game: Game = None
-        self.player_controller = None 
-        self.game_objects_controllers = []
-        self.move_down = False
-        self.direction_change = False
         self.ufo_timer = 0
         self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
-        self.has_ufo = False
         self.ufo = None
+        self.game_object_factory = GameObjectFactory()
         ControllerGame.__instance = self  
 
     @staticmethod
@@ -46,9 +43,7 @@ class ControllerGame(Subject):
 
 
         self._game.game_objects = []
-        player = GameObject()
-        player.position = (7, 13)
-        player.game_object_type = EnumObjectType.Player
+        player = self.game_object_factory.create_game_object(EnumObjectType.Player)
         self._game.game_objects.append(player)
 
         ROW_LENGHT = 10
@@ -69,12 +64,8 @@ class ControllerGame(Subject):
                     obj_type = EnumObjectType.GreenAlien
                 elif y == 2:
                     obj_type = EnumObjectType.BlueAlien
-                obj_game = GameObject()
-                obj_game.position = (x + offset_x, y + offset_y)
-                obj_game.direction = EnumObjectDirection.Right
-                obj_game.game_object_type = obj_type
-                self._game.game_objects.append(obj_game)
-
+                alien_game_object = self.game_object_factory.create_game_object(obj_type, position=(x+ offset_x, y+ offset_y))
+                self._game.game_objects.append(alien_game_object)
         return self._game
 
 
@@ -112,6 +103,14 @@ class ControllerGame(Subject):
                 self.ufo = None
                 self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
                 self.ufo_timer = 0
+        
+        #GameOver check
+        if self.game.player_lives < 1:
+            self.game.is_game_over = True
+        elif not aliens:
+            self.game.is_game_over = True
+        if self.game.is_game_over:
+            return
 
     def spawn_ufo(self):
         if self.ufo is None:
