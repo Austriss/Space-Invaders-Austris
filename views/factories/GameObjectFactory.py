@@ -12,9 +12,11 @@ class GameObjectFactory:
         game_object.direction = direction
 
         if object_type == EnumObjectType.Player:
-            game_object.position = (7, 13)
+            if position == (0, 0): #check if set to default
+                game_object.position = (7, 13)
         elif object_type in (EnumObjectType.YellowAlien, EnumObjectType.GreenAlien, EnumObjectType.BlueAlien, EnumObjectType.RedAlien):
-            game_object.direction = EnumObjectDirection.Right
+            if direction == EnumObjectDirection.NotSet:
+                game_object.direction = EnumObjectDirection.Right
         elif object_type == EnumObjectType.Bullet:
             game_object.direction = EnumObjectDirection.Up
         elif object_type == EnumObjectType.AlienBullet:

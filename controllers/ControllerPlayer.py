@@ -3,10 +3,17 @@ from models.GameObject import GameObject
 from typing import List
 from models.Enum.EnumObjectType import EnumObjectType
 from models.Enum.EnumObjectDirection import EnumObjectDirection
+from views.factories.GameObjectFactory import GameObjectFactory
 from models.Game import Game
+import time
 
 
 class ControllerPlayer():
+    can_shoot = True
+
+    def __init__(self):
+       self.game_object_factory = GameObjectFactory()
+
     @staticmethod
     def set_direction(player: GameObject, direction: EnumObjectDirection):
         direction: EnumObjectDirection = EnumObjectDirection.NotSet
@@ -14,23 +21,19 @@ class ControllerPlayer():
 
     @staticmethod   
     def update(player: GameObject, game_objects: List[GameObject], delta_milisec: float, game: Game):
-
      if player.game_object_type == EnumObjectType.Player:
       map_size = Game.map_size
+      new_position = list(player.position)
 
-      new_position = list(player.position) 
+      keys = pygame.key.get_pressed()
 
-      key = pygame.key.get_pressed()
-
-      if key[pygame.K_RIGHT]:
+      if keys[pygame.K_RIGHT]:
             new_position[0] += player.movement_speed * delta_milisec
-      elif key[pygame.K_LEFT]:
+      if keys[pygame.K_LEFT]:
             new_position[0] -= player.movement_speed * delta_milisec
-      elif key[pygame.K_SPACE]:
-            ControllerPlayer.fire(player, game_objects, game)
 
 
-      #in game bounds
+      # Keep player in map bounds
       if new_position[0] >= map_size[0]:
             new_position[0] = map_size[0] - 1
       elif new_position[0] < 0:
@@ -38,10 +41,9 @@ class ControllerPlayer():
 
       player.position = tuple(new_position)
 
-    @staticmethod
-    def fire(player: GameObject, game_objects: List[GameObject], game: Game):
-      bullet = GameObject()
-      bullet.position = [player.position[0], player.position[1] - 1]
-      bullet.game_object_type = EnumObjectType.Bullet
+    def fire(self, player: GameObject, game_objects: List[GameObject], game: Game):
+      bullet = self.game_object_factory.create_game_object(object_type = EnumObjectType.Bullet,
+                                                           position = [player.position[0], player.position[1] - 1],
+                                                           direction = EnumObjectDirection.Up)
       bullet.movement_speed = 0.008
       game.game_objects.append(bullet)

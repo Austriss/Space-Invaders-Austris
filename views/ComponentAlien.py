@@ -9,24 +9,23 @@ class ComponentAlien:
         self.game_object = game_object
         self.pygame_surfaces: List[pygame.Surface] = []
 
-        
-
         self.alien1_image = "assets/images/green.png"
-        self.alien2_image = "assets/images/red.png"
-
-        
+        self.alien2_image = "assets/images/yellow.png"
+        self.alien3_image = "assets/images/extra.png"
+        self.alien4_image = "assets/images/red.png"
 
         if self.game_object.game_object_type == EnumObjectType.GreenAlien:
                 self.load_surface(self.alien1_image)
-        elif self.game_object.game_object_type == EnumObjectType.RedAlien:
+        elif self.game_object.game_object_type == EnumObjectType.YellowAlien:
                 self.load_surface(self.alien2_image)
+        elif self.game_object.game_object_type == EnumObjectType.BlueAlien:
+                self.load_surface(self.alien3_image)
+        elif self.game_object.game_object_type == EnumObjectType.RedAlien:
+                self.load_surface(self.alien4_image)
 
     def load_surface(self, image_path: str):
         surface = pygame.image.load(image_path)
         self.pygame_surfaces.append(surface)
-
-
-
 
     
     def render(self, screen: pygame.Surface, cell_size: int):

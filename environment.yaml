@@ -1,4 +1,4 @@
-name: pygame
+name: SpaceInvaders
 
 channels:
   - conda-forge

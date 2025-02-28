@@ -1,0 +1,207 @@
+{
+    "score": 60,
+    "player_lives": 3,
+    "is_game_over": false,
+    "game_objects": [
+        {
+            "object_type": "Player",
+            "position": [
+                12.549999999999958,
+                13
+            ],
+            "direction": "NotSet"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                4.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                4.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                4.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                5.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                5.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                5.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                6.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                6.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                6.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                7.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                7.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                7.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                8.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                8.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                8.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                9.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                9.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                9.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                12.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                12.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                12.0,
+                6
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien2",
+            "position": [
+                13.0,
+                4
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "Alien1",
+            "position": [
+                13.0,
+                5
+            ],
+            "direction": "Left"
+        },
+        {
+            "object_type": "BlueAlien",
+            "position": [
+                13.0,
+                6
+            ],
+            "direction": "Left"
+        }
+    ]
+}

@@ -4,6 +4,7 @@ from models.GameObject import GameObject
 from models.Game import Game
 from models.Enum.EnumObjectType import EnumObjectType
 from models.Observer.Observer import Observer
+from views.factories.GameObjectFactory import GameObjectFactory
 import random
 from typing import List
 
@@ -11,27 +12,31 @@ class ControllerAlien(Observer):
 
     def __init__(self, alien: GameObject):
         Observer.__init__(self)
-        self.alien = alien
+        self.game_object_factory = GameObjectFactory()
+        self._alien = alien
         self.step_size = 0.5
         self.move_time = 0
         self.move_interval = 1000
         self.shoot_timer = 0
         self.shoot_interval = random.randint(2000, 5000)
         self.can_shoot = False
-
+    
+    def get_alien(self):
+        return self._alien
+    
     def on_event(self, event):
         if event == 'alien_direction_change':
             self.direction_change()
 
     def direction_change(self):
-        if self.alien.direction == EnumObjectDirection.Right:
-            self.alien.direction = EnumObjectDirection.Left
-        elif self.alien.direction == EnumObjectDirection.Left:
-            self.alien.direction = EnumObjectDirection.Right
+        if self.get_alien().direction == EnumObjectDirection.Right:
+            self.get_alien().direction = EnumObjectDirection.Left
+        elif self.get_alien().direction == EnumObjectDirection.Left:
+            self.get_alien().direction = EnumObjectDirection.Right
 
     def update_movement(self, game: Game, delta_milisec: float):
         self.move_time += delta_milisec
-        if self.move_time >= self.move_interval and not game.move_down:
+        if self.move_time >= self.move_interval and not game.alien_move_down:
             self.move_time = 0
             self.move()
 
@@ -53,24 +58,23 @@ class ControllerAlien(Observer):
                 self.shoot_timer = 0
                 self.shoot_interval = random.randint(2000, 5000)
                 
-    def update(self, subject, event=None, data=None, delta_milisec=None):
+    def update(self, subject, event=None, delta_milisec=None):
         if event == 'alien_direction_change':
             self.direction_change()
         else:
             if isinstance(subject, Game):
-                self.update_movement(subject, delta_milisec)
+                self.update_movement(subject, delta_milisec) 
                 self.update_shooting(subject, delta_milisec)
 
     def game_update(self, game: Game, delta_milisec: float):
-
         self.update_movement(game, delta_milisec)
         self.update_shooting(game, delta_milisec)
 
     def move(self):
-        if self.alien.direction == EnumObjectDirection.Right:
-            self.alien.position = (self.alien.position[0] + self.step_size, self.alien.position[1])
-        elif self.alien.direction == EnumObjectDirection.Left:
-            self.alien.position = (self.alien.position[0] - self.step_size, self.alien.position[1])
+        if self.get_alien().direction == EnumObjectDirection.Right:
+            self.get_alien().position = (self.get_alien().position[0] + self.step_size, self.get_alien().position[1])
+        elif self.get_alien().direction == EnumObjectDirection.Left:
+            self.get_alien().position = (self.get_alien().position[0] - self.step_size, self.get_alien().position[1])
 
     def update_ufo(self, ufo: GameObject, game: Game, delta_milisec: float):
         if ufo.direction == EnumObjectDirection.Right:
@@ -80,9 +84,7 @@ class ControllerAlien(Observer):
 
     # random alien shooting
     def shoot(self, game_objects: List[GameObject]):
-        bullet = GameObject()
-        bullet.game_object_type = EnumObjectType.AlienBullet
-        bullet.position = (self.alien.position[0], self.alien.position[1] + 1)
-        bullet.direction = EnumObjectDirection.Down
-        bullet.movement_speed = 1e-3
+        bullet = self.game_object_factory.create_game_object(object_type=EnumObjectType.AlienBullet,
+                                                              direction = EnumObjectDirection.Down,
+                                                              position=(self.get_alien().position[0], self.get_alien().position[1] + 1))
         game_objects.append(bullet)

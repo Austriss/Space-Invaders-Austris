@@ -1,5 +1,6 @@
 import pygame
 from typing import List
+import json
 from models.Game import Game
 from controllers.ControllerGame import ControllerGame
 from controllers.ControllerPlayer import ControllerPlayer
@@ -9,89 +10,99 @@ from views.ComponentGameObject import ComponentGameObject
 from views.ComponentBullet import ComponentBullet
 from views.ComponentPlayer import ComponentPlayer
 from views.ComponentAlien import ComponentAlien
+from views.factories.GameObjectFactory import GameObjectFactory
 from models.Enum.EnumObjectType import EnumObjectType
 from models.Observer.Observer import Subject, Observer
+from models.Enum.EnumObjectDirection import EnumObjectDirection
 
 import time
 
 class Main(Observer):
 
     def __init__(self):
-
         pygame.init()
-        
-
         self.controller = ControllerGame.instance()
-
+        self.player_controller = None
         self.game = self.controller.new_game() 
-
         self.controller.attach(self)
-       
         self.screen_width = 480 # mapsize: 15 * 1 pixel cell: 32
         self.screen_height = 480
         self.cell_size = 32
-
         self.map_size = self.game.map_size
         self.screen_width = self.map_size[0] * self.cell_size
         self.screen_height = self.map_size[1] * self.cell_size
-
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
-
         self.player_component: List[ComponentPlayer] = []
         self.alien_components: List[ComponentAlien] = []
         self.bullet_components: List[ComponentBullet] = []
-        
         self.alien_controllers: List[ControllerAlien] = []
 
-        for game_object in self.game.game_objects:
-            if game_object.game_object_type == EnumObjectType.Player:
-                self.player_component.append(ComponentPlayer(game_object))
-            if game_object.game_object_type in (EnumObjectType.YellowAlien, 
-                                                EnumObjectType.GreenAlien, 
-                                                EnumObjectType.BlueAlien, 
-                                                EnumObjectType.RedAlien):
-                alien_controller = ControllerAlien(game_object) 
-                self.alien_controllers.append(alien_controller) 
-                self.controller.attach(alien_controller) 
-                self.alien_components.append(ComponentAlien(game_object))
-                
-                
-        self.score_text = None
-        self.lives_text = None
+        self.game_components()
+
         self.ufo_controller = None
         self.update_display()
-        self.is_game_running = True
+        self._is_game_running = True
+        self.game_paused = False
         self.show()
 
-    def update_display(self):
 
+    def is_game_paused(self):
+        return self.game_paused
+    
+    def set_resume_game(self):
+        self.game_paused = False
+
+    def set_game_paused(self):
+        self.game_paused = True
+
+    def is_game_running(self):
+        return self._is_game_running
+    
+    def set_stop_game(self):
+        self._is_game_running = False
+
+    def update_display(self):
         font = pygame.font.Font(None, 30)
         score_text = font.render(f"Score: {self.game.score}", True, (255, 255, 255))
         lives_text = font.render(f"Lives: {self.game.player_lives}", True, (255, 255, 255))
         self.score_text = score_text
         self.lives_text = lives_text
 
-
     def on_event(self, event):
-        if event == "alien_direction_change":
-            self.update_display()
+        pass
 
     def show(self):
         time_last = pygame.time.get_ticks()
 
-        while self.is_game_running:
+        while self.is_game_running():
             delta_milisec = pygame.time.get_ticks() - time_last
             time_last = pygame.time.get_ticks()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.is_game_running = False
+                    self.set_stop_game()
                     break
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         for game_object in self.game.game_objects:
                             if game_object.game_object_type == EnumObjectType.Player:
-                                ControllerPlayer.fire(game_object, self.game.game_objects, self.game) 
+                                self.player_controller.fire(game_object, self.game.game_objects, self.game) 
+                    elif event.key == pygame.K_ESCAPE:
+                        if not self.is_game_paused():
+                            self.save_game()
+                            self.set_game_paused()
+                            print("game paused and saved")
+                    elif event.key == pygame.K_p:
+                        if self.is_game_paused():
+                            self.load_game()
+                            self.set_resume_game()
+                            self._is_game_running = True
+                            time_last = pygame.time.get_ticks()
+                            print("Game Load and Resumed")
+                            break
+
+            if self.is_game_paused():
+                continue
 
             if not self.game.is_game_over:
                 self.game_loop_update(delta_milisec)
@@ -107,10 +118,10 @@ class Main(Observer):
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             gameover_loop = False
-                            self.is_game_running = False
+                            self.set_stop_game()
                         if event.type == pygame.KEYDOWN:
                             gameover_loop = False
-                            self.is_game_running = False
+                            self.set_stop_game()
                     time.sleep(0.01)
 
         pygame.quit()
@@ -130,7 +141,7 @@ class Main(Observer):
             self.ufo_controller.update_ufo(self.controller.ufo, self.game, delta_milisec)
 
         for controller in self.alien_controllers:
-            if controller.alien in self.game.game_objects:
+            if controller.get_alien() in self.game.game_objects:
                 controller.game_update(self.game, delta_milisec)
             else:
                 self.alien_controllers.remove(controller)
@@ -202,7 +213,72 @@ class Main(Observer):
             score_center = score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2 + 50))
             self.screen.blit(score_text, score_center)
 
+    def game_components(self):
+        self.player_component: List[ComponentPlayer] = [] 
+        self.alien_components: List[ComponentAlien] = []
+        self.bullet_components: List[ComponentBullet] = []
+        self.alien_controllers: List[ControllerAlien] = []
+        self.ufo_controller = None
 
+        for game_object in self.game.game_objects:
+            if game_object.game_object_type == EnumObjectType.Player:
+                self.player_component.append(ComponentPlayer(game_object))
+                self.player_controller = ControllerPlayer()
+            if game_object.game_object_type in (EnumObjectType.YellowAlien, 
+                                                EnumObjectType.GreenAlien, 
+                                                EnumObjectType.BlueAlien, 
+                                                EnumObjectType.RedAlien):
+                alien_controller = ControllerAlien(game_object) 
+                self.alien_controllers.append(alien_controller) 
+                self.controller.attach(alien_controller) 
+                self.alien_components.append(ComponentAlien(game_object))        
+
+
+    def save_game(self):
+        game_state = {
+            "score": self.game.score,
+            "player_lives": self.game.player_lives,
+            "is_game_over": self.game.is_game_over,
+            "game_objects": []
+        }
+        for game_object in self.game.game_objects:
+            data = {
+                "object_type": game_object.game_object_type.value,
+                "position": game_object.position,
+                "direction": game_object.direction.value
+            }
+            game_state["game_objects"].append(data)
+
+        with open("savegame.json", "w") as f:
+            json.dump(game_state, f, indent=4)
+        print("Game saved")
+
+    def load_game(self):
+        try:
+            with open("savegame.json", "r") as f:
+                game_state = json.load(f)
+            self.game.is_game_over = game_state["is_game_over"]
+            self.game.score = game_state["score"]
+            self.game.player_lives = game_state["player_lives"]
+            self.game.game_objects = []
+
+            factory = GameObjectFactory()
+
+            for data_object in game_state["game_objects"]:
+                enum_object_type = EnumObjectType(data_object["object_type"])
+                enum_direction = EnumObjectDirection(data_object["direction"])
+                game_object = factory.create_game_object(
+                    object_type=enum_object_type,
+                    position=tuple(data_object["position"]),
+                    direction=enum_direction)
+                self.game.game_objects.append(game_object)
+
+            self.game_components()
+            self.controller.set_game(self.game)
+        except:
+            self.game = self.controller.new_game()
+            self.game_components()
+            self.controller.set_game(self.game)
 
 
 if __name__ == "__main__":

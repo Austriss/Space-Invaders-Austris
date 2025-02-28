@@ -6,5 +6,6 @@ class EnumObjectType(Enum):
     GreenAlien = "Alien1"
     YellowAlien = "Alien2"
     RedAlien = "Ufo"
-    Extra = "Shield"
-    
+    BlueAlien = "BlueAlien"
+    Bullet = "Bullet"
+    AlienBullet = "AlienBullet"

@@ -48,6 +48,10 @@ class ControllerBullet():
                         if bullet in game_objects:
                             game_objects.remove(bullet)
                             game.player_lives -= 1
+                            for player in game_objects:
+                                if player.game_object_type == EnumObjectType.Player:
+                                    player.position = (7, 13)
+                                    break
                         return
                         
 
