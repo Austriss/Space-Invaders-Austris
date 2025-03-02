@@ -16,8 +16,6 @@ class ComponentGameObject:
         pass
 
 
-
-
     
     def render(self, screen: pygame.Surface, cell_size: int):
         if self.pygame_surfaces:

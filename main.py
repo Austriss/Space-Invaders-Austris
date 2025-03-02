@@ -1,6 +1,7 @@
 import pygame
 from typing import List
 import json
+from loguru import logger
 from models.Game import Game
 from controllers.ControllerGame import ControllerGame
 from controllers.ControllerPlayer import ControllerPlayer
@@ -14,8 +15,10 @@ from views.factories.GameObjectFactory import GameObjectFactory
 from models.Enum.EnumObjectType import EnumObjectType
 from models.Observer.Observer import Subject, Observer
 from models.Enum.EnumObjectDirection import EnumObjectDirection
-
 import time
+SCREEN_WIDTH = 480
+SCREEN_HEIGHT = 480
+CELL_SIZE = 32
 
 class Main(Observer):
 
@@ -24,11 +27,12 @@ class Main(Observer):
         self.controller = ControllerGame.instance()
         self.player_controller = None
         self.game = self.controller.new_game() 
+        logger.info("new game started")
         self.controller.attach(self)
-        self.screen_width = 480 # mapsize: 15 * 1 pixel cell: 32
-        self.screen_height = 480
-        self.cell_size = 32
-        self.map_size = self.game.map_size
+        self.screen_width = self.game.get_map_width # mapsize: 15 * 1 pixel cell: 32
+        self.screen_height = self.game.get_map_height
+        self.cell_size = self.game.get_cell_size
+        self.map_size = self.game.get_map_size
         self.screen_width = self.map_size[0] * self.cell_size
         self.screen_height = self.map_size[1] * self.cell_size
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
@@ -91,17 +95,19 @@ class Main(Observer):
                         if not self.is_game_paused():
                             self.save_game()
                             self.set_game_paused()
-                            print("game paused and saved")
+                            logger.info("game paused and saved")
                     elif event.key == pygame.K_p:
                         if self.is_game_paused():
                             self.load_game()
                             self.set_resume_game()
                             self._is_game_running = True
                             time_last = pygame.time.get_ticks()
-                            print("Game Load and Resumed")
+                            logger.info("Game Loaded and Resumed")
                             break
 
             if self.is_game_paused():
+                self.draw_pause_screen()
+                pygame.display.flip()
                 continue
 
             if not self.game.is_game_over:
@@ -124,6 +130,7 @@ class Main(Observer):
                             self.set_stop_game()
                     time.sleep(0.01)
 
+        logger.info("Quitted game")
         pygame.quit()
 
 
@@ -204,14 +211,25 @@ class Main(Observer):
                 self.screen.blit(self.lives_text, (120, 10))
         #GameOver screen
         else:
-            game_over_font = pygame.font.Font(None, 74)
-            game_over_text = game_over_font.render("game over", True, (255, 0, 0))
-            gameover_center = game_over_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
-            self.screen.blit(game_over_text, gameover_center)
-            score_font = pygame.font.Font(None, 74)
-            score_text = score_font.render(f"score: {self.game.score}", True, (255, 0, 0))
-            score_center = score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2 + 50))
-            self.screen.blit(score_text, score_center)
+            logger.info("game over!")
+            self.draw_gameover_screen()
+
+
+    def draw_pause_screen(self):
+        font = pygame.font.Font(None, 74)
+        pause_text = font.render("Game paused", True, (255, 255, 255))
+        text_rect = pause_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
+        self.screen.blit(pause_text, text_rect)
+
+    def draw_gameover_screen(self):
+        game_over_font = pygame.font.Font(None, 74)
+        game_over_text = game_over_font.render("game over", True, (255, 0, 0))
+        gameover_center = game_over_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2))
+        self.screen.blit(game_over_text, gameover_center)
+        score_font = pygame.font.Font(None, 74)
+        score_text = score_font.render(f"score: {self.game.score}", True, (255, 0, 0))
+        score_center = score_text.get_rect(center=(self.screen_width / 2, self.screen_height / 2 + 50))
+        self.screen.blit(score_text, score_center)
 
     def game_components(self):
         self.player_component: List[ComponentPlayer] = [] 
@@ -251,7 +269,7 @@ class Main(Observer):
 
         with open("savegame.json", "w") as f:
             json.dump(game_state, f, indent=4)
-        print("Game saved")
+        logger.info("Game saved")
 
     def load_game(self):
         try:
@@ -276,6 +294,7 @@ class Main(Observer):
             self.game_components()
             self.controller.set_game(self.game)
         except:
+            logger.exception("savegame not found, starting new game")
             self.game = self.controller.new_game()
             self.game_components()
             self.controller.set_game(self.game)

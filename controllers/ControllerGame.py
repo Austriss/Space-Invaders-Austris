@@ -1,4 +1,5 @@
 from models.Game import Game
+from loguru import logger
 from models.Enum.EnumObjectType import EnumObjectType
 from models.GameObject import GameObject
 from models.Enum.EnumObjectDirection import EnumObjectDirection
@@ -17,7 +18,7 @@ class ControllerGame(Subject):
 
     def __init__(self):
         if ControllerGame.__instance is not None:
-            raise Exception("ControllerGame singleton")
+            logger.error("ControllerGame singleton")
         Subject.__init__(self)
         self._game: Game = None
         self.ufo_timer = 0
@@ -66,7 +67,6 @@ class ControllerGame(Subject):
 
         offset_x = (map_width - ALIEN_ROW_LENGHT) // 2
         offset_y = ((map_height - ALIEN_ROW_COUNT) // 2) -3
-
 
 
         for x in range(ALIEN_ROW_LENGHT):

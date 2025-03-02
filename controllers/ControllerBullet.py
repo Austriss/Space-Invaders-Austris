@@ -57,11 +57,11 @@ class ControllerBullet():
 
 
     @staticmethod
-    def collision(bullet: GameObject, target: GameObject):
-        if (bullet.position[0] < target.position[0] + 1 and
-            bullet.position[0] + 1 > target.position[0] and
-            bullet.position[1] < target.position[1] + 1 and
-            bullet.position[1] + 1 > target.position[1]):
+    def collision(bullet: GameObject, object: GameObject):
+        if (bullet.position[0] < object.position[0] + 1 and
+            bullet.position[0] + 1 > object.position[0] and
+            bullet.position[1] < object.position[1] + 1 and
+            bullet.position[1] + 1 > object.position[1]):
             return True
         return False
 

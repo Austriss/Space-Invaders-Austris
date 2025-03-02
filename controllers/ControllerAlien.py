@@ -8,15 +8,18 @@ from views.factories.GameObjectFactory import GameObjectFactory
 import random
 from typing import List
 
+ALIEN_STEP_SIZE = 0.5
+ALIEN_MOVE_INTERVAL = 1000
+
 class ControllerAlien(Observer):
 
     def __init__(self, alien: GameObject):
         Observer.__init__(self)
         self.game_object_factory = GameObjectFactory()
         self._alien = alien
-        self.step_size = 0.5
+        self.step_size = ALIEN_STEP_SIZE
         self.move_time = 0
-        self.move_interval = 1000
+        self.move_interval = ALIEN_MOVE_INTERVAL
         self.shoot_timer = 0
         self.shoot_interval = random.randint(2000, 5000)
         self.can_shoot = False
