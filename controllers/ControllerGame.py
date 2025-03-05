@@ -1,9 +1,7 @@
 from models.Game import Game
 from loguru import logger
 from models.Enum.EnumObjectType import EnumObjectType
-from models.GameObject import GameObject
 from models.Enum.EnumObjectDirection import EnumObjectDirection
-from controllers.ControllerAlien import ControllerAlien
 from models.Observer.Observer import Subject
 from views.factories.GameObjectFactory import GameObjectFactory
 import random
@@ -40,17 +38,8 @@ class ControllerGame(Subject):
     def set_game(self, game):
         self._game = game
 
-    def get_ufo_timer(self):
-        return self.ufo_timer
-    
-    def reset_ufo_timer(self):
-        self.ufo_timer = 0
-    
     def reset_ufo_timer_interval(self):
         self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
-
-    def set_game_over(self):
-        self.game.is_game_over = True
 
     def new_game(self):
         game_instance = Game.instance()
@@ -105,7 +94,7 @@ class ControllerGame(Subject):
         #update ufo spawn
         if self.ufo is None:
             self.ufo_timer += delta_milisec
-            if self.get_ufo_timer() >= self.ufo_timer_interval:
+            if self.ufo_timer >= self.ufo_timer_interval:
                 self.spawn_ufo()
         elif self.ufo:
             if self.ufo.position[0] > self.game.map_size[0] or self.ufo.position[0] < -1:
@@ -113,13 +102,13 @@ class ControllerGame(Subject):
                     self.game.game_objects.remove(self.ufo)
                 self.ufo = None
                 self.reset_ufo_timer_interval()
-                self.reset_ufo_timer()
+                self.ufo_timer = 0
         
         #GameOver check
         if self.game.player_lives < 1:
-            self.set_game_over()
+            self.game.is_game_over = True
         elif not aliens:
-            self.set_game_over()
+            self.game.is_game_over = True
         if self.game.is_game_over:
             return
 
@@ -129,5 +118,5 @@ class ControllerGame(Subject):
                                                                    object_type=EnumObjectType.RedAlien,
                                                                    direction = EnumObjectDirection.Right)
             self.game.game_objects.append(self.ufo)
-            self.reset_ufo_timer()
+            self.ufo_timer = 0
 

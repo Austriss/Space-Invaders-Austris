@@ -9,3 +9,8 @@ class GameObject:
     direction: EnumObjectDirection = EnumObjectDirection.NotSet
     movement_speed: float = 0.003
 
+    def set_position(self, x, y):
+        self.position = (x, y)
+
+    def get_position(self):
+        return self.position

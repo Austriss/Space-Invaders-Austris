@@ -5,7 +5,6 @@ from models.Enum.EnumObjectType import EnumObjectType
 from models.Enum.EnumObjectDirection import EnumObjectDirection
 from views.factories.GameObjectFactory import GameObjectFactory
 from models.Game import Game
-import time
 
 
 class ControllerPlayer():
@@ -22,24 +21,24 @@ class ControllerPlayer():
     @staticmethod   
     def update(player: GameObject, game_objects: List[GameObject], delta_milisec: float, game: Game):
      if player.game_object_type == EnumObjectType.Player:
+      
       map_size = Game.map_size
-      new_position = list(player.position)
-
+      x, y = player.get_position()
       keys = pygame.key.get_pressed()
 
       if keys[pygame.K_RIGHT]:
-            new_position[0] += player.movement_speed * delta_milisec
+           x += player.movement_speed * delta_milisec
       if keys[pygame.K_LEFT]:
-            new_position[0] -= player.movement_speed * delta_milisec
+            x -= player.movement_speed * delta_milisec
 
-
+      
       # Keep player in map bounds
-      if new_position[0] >= map_size[0]:
-            new_position[0] = map_size[0] - 1
-      elif new_position[0] < 0:
-            new_position[0] = 0
+      if x >= map_size[0]:
+            x = map_size[0] - 1
+      elif x < 0:
+            x = 0
 
-      player.position = tuple(new_position)
+      player.set_position(x, y)
 
     def fire(self, player: GameObject, game_objects: List[GameObject], game: Game):
       bullet = self.game_object_factory.create_game_object(object_type = EnumObjectType.Bullet,

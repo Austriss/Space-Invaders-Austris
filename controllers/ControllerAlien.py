@@ -1,4 +1,3 @@
-import pygame
 from models.Enum.EnumObjectDirection import EnumObjectDirection
 from models.GameObject import GameObject
 from models.Game import Game
@@ -10,6 +9,7 @@ from typing import List
 
 ALIEN_STEP_SIZE = 0.5
 ALIEN_MOVE_INTERVAL = 1000
+ALIEN_RANDOM_SHOOT_CHANCE = 0.01
 
 class ControllerAlien(Observer):
 
@@ -24,18 +24,16 @@ class ControllerAlien(Observer):
         self.shoot_interval = random.randint(2000, 5000)
         self.can_shoot = False
     
-    def get_alien(self):
-        return self._alien
     
     def on_event(self, event):
         if event == 'alien_direction_change':
             self.direction_change()
 
     def direction_change(self):
-        if self.get_alien().direction == EnumObjectDirection.Right:
-            self.get_alien().direction = EnumObjectDirection.Left
-        elif self.get_alien().direction == EnumObjectDirection.Left:
-            self.get_alien().direction = EnumObjectDirection.Right
+        if self._alien.direction == EnumObjectDirection.Right:
+            self._alien.direction = EnumObjectDirection.Left
+        elif self._alien.direction == EnumObjectDirection.Left:
+            self._alien.direction = EnumObjectDirection.Right
 
     def update_movement(self, game: Game, delta_milisec: float):
         self.move_time += delta_milisec
@@ -51,7 +49,7 @@ class ControllerAlien(Observer):
             self.can_shoot = True
 
         if self.can_shoot:
-            if random.random() < 0.01:
+            if random.random() < ALIEN_RANDOM_SHOOT_CHANCE:
                 self.shoot(game.game_objects)
                 self.shoot_timer = 0
                 self.shoot_interval = random.randint(2000, 5000)
@@ -65,19 +63,19 @@ class ControllerAlien(Observer):
         if event == 'alien_direction_change':
             self.direction_change()
         else:
-            if isinstance(subject, Game):
-                self.update_movement(subject, delta_milisec) 
-                self.update_shooting(subject, delta_milisec)
+            self.update_movement(subject, delta_milisec) 
+            self.update_shooting(subject, delta_milisec)
 
     def game_update(self, game: Game, delta_milisec: float):
         self.update_movement(game, delta_milisec)
         self.update_shooting(game, delta_milisec)
 
     def move(self):
-        if self.get_alien().direction == EnumObjectDirection.Right:
-            self.get_alien().position = (self.get_alien().position[0] + self.step_size, self.get_alien().position[1])
-        elif self.get_alien().direction == EnumObjectDirection.Left:
-            self.get_alien().position = (self.get_alien().position[0] - self.step_size, self.get_alien().position[1])
+        x, y = self._alien.get_position()
+        if self._alien.direction == EnumObjectDirection.Right:
+            self._alien.set_position(x + self.step_size, y)
+        elif self._alien.direction == EnumObjectDirection.Left:
+            self._alien.set_position(x - self.step_size, y)
 
     def update_ufo(self, ufo: GameObject, game: Game, delta_milisec: float):
         if ufo.direction == EnumObjectDirection.Right:
@@ -87,7 +85,8 @@ class ControllerAlien(Observer):
 
     # random alien shooting
     def shoot(self, game_objects: List[GameObject]):
+        x, y = self._alien.get_position()
         bullet = self.game_object_factory.create_game_object(object_type=EnumObjectType.AlienBullet,
                                                               direction = EnumObjectDirection.Down,
-                                                              position=(self.get_alien().position[0], self.get_alien().position[1] + 1))
+                                                              position=(x, y + 1))
         game_objects.append(bullet)
