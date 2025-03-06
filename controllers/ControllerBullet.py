@@ -6,6 +6,7 @@ from models.Game import Game
 
 UFO_KILL_SCORE = 50
 ALIEN_KILL_SCORE = 10
+PLAYER_DEFAULT_POSITION = (7, 13)
 
 class ControllerBullet():
 
@@ -49,7 +50,7 @@ class ControllerBullet():
                             game.player_lives -= 1
                             for player in game_objects:
                                 if player.game_object_type == EnumObjectType.Player:
-                                    player.position = (7, 13)
+                                    player.position = PLAYER_DEFAULT_POSITION
                                     break
                         return
                         
