@@ -2,7 +2,10 @@ from models.Game import Game
 from loguru import logger
 from models.Enum.EnumObjectType import EnumObjectType
 from models.Enum.EnumObjectDirection import EnumObjectDirection
-from models.Observer.Observer import Subject
+from models.Enum.EnumAlienEventType import EnumAlienEventType
+from utils.commands.AlienCommand import AlienCommand
+from utils.Observer.Observer import Subject
+from utils.Observer.Event import Event
 from views.factories.GameObjectFactory import GameObjectFactory
 import random
 
@@ -10,6 +13,9 @@ ALIEN_ROW_LENGHT = 10
 ALIEN_ROW_COUNT = 3
 UFO_INTERVAL_MIN = 15
 UFO_INTERVAL_MAX = 30
+ALIEN_INTERVAL_MIN = 10
+ALIEN_INTERVAL_MAX = 20
+ALIEN_STOP_TIME = 5
 
 class ControllerGame(Subject):
     __instance = None
@@ -22,6 +28,10 @@ class ControllerGame(Subject):
         self.ufo_timer = 0
         self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
         self.ufo = None
+        self.alien_timer_interval = random.randint(ALIEN_INTERVAL_MIN, ALIEN_INTERVAL_MAX) * 1000
+        self.alien_stop_timer = 0
+        self.alien_resume_timer = 0
+        self.alien_stop = False
         self.game_object_factory = GameObjectFactory()
         ControllerGame.__instance = self
 
@@ -41,10 +51,12 @@ class ControllerGame(Subject):
     def reset_ufo_timer_interval(self):
         self.ufo_timer_interval = random.randint(UFO_INTERVAL_MIN, UFO_INTERVAL_MAX) * 1000
 
+    def reset_alien_timer_interval(self):
+        self.alien_timer_interval = random.randint(ALIEN_INTERVAL_MIN, ALIEN_INTERVAL_MAX) * 1000
+
     def new_game(self):
         game_instance = Game.instance()
         self._game = game_instance
-
 
         self._game.game_objects = []
         player = self.game_object_factory.create_game_object(EnumObjectType.Player)
@@ -52,12 +64,9 @@ class ControllerGame(Subject):
 
 
         map_width, map_height = self._game.map_size
-
-
         offset_x = (map_width - ALIEN_ROW_LENGHT) // 2
         offset_y = ((map_height - ALIEN_ROW_COUNT) // 2) -3
-
-
+  
         for x in range(ALIEN_ROW_LENGHT):
             for y in range(ALIEN_ROW_COUNT):
                 if y == 0:
@@ -81,7 +90,15 @@ class ControllerGame(Subject):
         if border_check and not self.direction_change:
             self.game.alien_move_down = True
             self.direction_change = True
-            self.notify("alien_direction_change") 
+
+            #check one aliens direction
+            if aliens[0].direction == EnumObjectDirection.Right:
+                new_direction = EnumObjectDirection.Left
+            else:
+                new_direction = EnumObjectDirection.Right
+
+            command = AlienCommand(EnumAlienEventType.CHANGE_DIRECTION, new_direction)
+            self.notify(Event(EnumAlienEventType.CHANGE_DIRECTION, command)) 
 
         elif not border_check:
             self.direction_change = False
@@ -103,6 +120,27 @@ class ControllerGame(Subject):
                 self.ufo = None
                 self.reset_ufo_timer_interval()
                 self.ufo_timer = 0
+        
+        #aliens randomly stop for 5sec
+            #get one alien direction
+        last_direction = aliens[0].direction
+        if not self.alien_stop:
+            self.alien_stop_timer += delta_milisec
+            if self.alien_stop_timer >= self.alien_timer_interval:
+                self.alien_stop = True
+                command = AlienCommand(EnumAlienEventType.STOP, last_direction)
+                self.notify(Event(EnumAlienEventType.STOP, command))
+                self.reset_alien_timer_interval()
+                self.alien_stop_timer = 0
+        elif self.alien_stop:
+            self.alien_resume_timer += delta_milisec
+            if self.alien_resume_timer >= ALIEN_STOP_TIME * 1000:
+                self.alien_stop = False
+                command = AlienCommand(EnumAlienEventType.RESUME, last_direction)
+                self.notify(Event(EnumAlienEventType.RESUME, command))
+                self.reset_alien_timer_interval()
+                self.alien_resume_timer = 0
+
         
         #GameOver check
         if self.game.player_lives < 1:

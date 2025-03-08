@@ -2,7 +2,9 @@ from models.Enum.EnumObjectDirection import EnumObjectDirection
 from models.GameObject import GameObject
 from models.Game import Game
 from models.Enum.EnumObjectType import EnumObjectType
-from models.Observer.Observer import Observer
+from models.Enum.EnumAlienEventType import EnumAlienEventType
+from utils.Observer.Observer import Observer
+from utils.commands.AlienCommand import AlienCommand
 from views.factories.GameObjectFactory import GameObjectFactory
 import random
 from typing import List
@@ -10,6 +12,7 @@ from typing import List
 ALIEN_STEP_SIZE = 0.5
 ALIEN_MOVE_INTERVAL = 1000
 ALIEN_RANDOM_SHOOT_CHANCE = 0.01
+
 
 class ControllerAlien(Observer):
 
@@ -23,21 +26,33 @@ class ControllerAlien(Observer):
         self.shoot_timer = 0
         self.shoot_interval = random.randint(2000, 5000)
         self.can_shoot = False
+        self.last_direction = EnumObjectDirection.Right
     
     
     def on_event(self, event):
-        if event == 'alien_direction_change':
-            self.direction_change()
+        if isinstance(event.data, AlienCommand):
+            self.process_event_command(event.data)
+    
+    def process_event_command(self, command: AlienCommand):
+        if command.command_type == EnumAlienEventType.CHANGE_DIRECTION:
+            self._alien.direction = command.direction
+            self.last_direction = command.direction
+        elif command.command_type == EnumAlienEventType.STOP:
+            if command.direction != EnumObjectDirection.NotSet:
+                self.last_direction = command.direction
+            self._alien.direction = EnumObjectDirection.NotSet
+        elif command.command_type == EnumAlienEventType.RESUME:
+            self._alien.direction = self.last_direction
 
-    def direction_change(self):
-        if self._alien.direction == EnumObjectDirection.Right:
-            self._alien.direction = EnumObjectDirection.Left
-        elif self._alien.direction == EnumObjectDirection.Left:
-            self._alien.direction = EnumObjectDirection.Right
+
 
     def update_movement(self, game: Game, delta_milisec: float):
         self.move_time += delta_milisec
-        if self.move_time >= self.move_interval and not game.alien_move_down:
+        if (
+            self.move_time >= self.move_interval 
+            and not game.alien_move_down
+            and self._alien.direction != EnumObjectDirection.NotSet
+            ):
             self.move_time = 0
             self.move()
 
@@ -58,19 +73,13 @@ class ControllerAlien(Observer):
                 self.can_shoot = False
                 self.shoot_timer = 0
                 self.shoot_interval = random.randint(2000, 5000)
-                
-    def update(self, subject, event=None, delta_milisec=None):
-        if event == 'alien_direction_change':
-            self.direction_change()
-        else:
-            self.update_movement(subject, delta_milisec) 
-            self.update_shooting(subject, delta_milisec)
 
     def game_update(self, game: Game, delta_milisec: float):
         self.update_movement(game, delta_milisec)
         self.update_shooting(game, delta_milisec)
 
     def move(self):
+        #if not direction notset
         x, y = self._alien.get_position()
         if self._alien.direction == EnumObjectDirection.Right:
             self._alien.set_position(x + self.step_size, y)
