@@ -2,25 +2,21 @@ import pygame
 from typing import List
 import json
 from loguru import logger
-from models.Game import Game
 from controllers.ControllerGame import ControllerGame
 from controllers.ControllerPlayer import ControllerPlayer
 from controllers.ControllerAlien import ControllerAlien
 from controllers.ControllerBullet import ControllerBullet
-from views.ComponentGameObject import ComponentGameObject
 from views.ComponentBullet import ComponentBullet
 from views.ComponentPlayer import ComponentPlayer
 from views.ComponentAlien import ComponentAlien
 from views.factories.GameObjectFactory import GameObjectFactory
 from models.Enum.EnumObjectType import EnumObjectType
-from models.Observer.Observer import Subject, Observer
+from utils.Observer.Observer import Subject, Observer
 from models.Enum.EnumObjectDirection import EnumObjectDirection
 import time
-SCREEN_WIDTH = 480
-SCREEN_HEIGHT = 480
-CELL_SIZE = 32
 
-class Main(Observer):
+
+class Main():
 
     def __init__(self):
         pygame.init()
@@ -28,42 +24,25 @@ class Main(Observer):
         self.player_controller = None
         self.game = self.controller.new_game() 
         logger.info("new game started")
-        self.controller.attach(self)
-        self.screen_width = self.game.get_map_width # mapsize: 15 * 1 pixel cell: 32
-        self.screen_height = self.game.get_map_height
-        self.cell_size = self.game.get_cell_size
-        self.map_size = self.game.get_map_size
+
+        self.cell_size = self.game.cell_size
+        self.map_size = self.game.map_size
         self.screen_width = self.map_size[0] * self.cell_size
         self.screen_height = self.map_size[1] * self.cell_size
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+
         self.player_component: List[ComponentPlayer] = []
         self.alien_components: List[ComponentAlien] = []
         self.bullet_components: List[ComponentBullet] = []
         self.alien_controllers: List[ControllerAlien] = []
 
         self.game_components()
-
         self.ufo_controller = None
         self.update_display()
         self._is_game_running = True
-        self.game_paused = False
+        self.game_paused = self.game.is_game_paused
         self.show()
 
-
-    def is_game_paused(self):
-        return self.game_paused
-    
-    def set_resume_game(self):
-        self.game_paused = False
-
-    def set_game_paused(self):
-        self.game_paused = True
-
-    def is_game_running(self):
-        return self._is_game_running
-    
-    def set_stop_game(self):
-        self._is_game_running = False
 
     def update_display(self):
         font = pygame.font.Font(None, 30)
@@ -72,19 +51,17 @@ class Main(Observer):
         self.score_text = score_text
         self.lives_text = lives_text
 
-    def on_event(self, event):
-        pass
 
     def show(self):
         time_last = pygame.time.get_ticks()
 
-        while self.is_game_running():
+        while self._is_game_running:
             delta_milisec = pygame.time.get_ticks() - time_last
             time_last = pygame.time.get_ticks()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.set_stop_game()
+                    self._is_game_running = False
                     break
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
@@ -92,20 +69,22 @@ class Main(Observer):
                             if game_object.game_object_type == EnumObjectType.Player:
                                 self.player_controller.fire(game_object, self.game.game_objects, self.game) 
                     elif event.key == pygame.K_ESCAPE:
-                        if not self.is_game_paused():
+                        if self.game_paused: 
+                            self.game_paused = False
+                            logger.info("game resumed")
+                        else:
                             self.save_game()
-                            self.set_game_paused()
+                            self.game_paused = True
                             logger.info("game paused and saved")
                     elif event.key == pygame.K_p:
-                        if self.is_game_paused():
-                            self.load_game()
-                            self.set_resume_game()
-                            self._is_game_running = True
-                            time_last = pygame.time.get_ticks()
-                            logger.info("Game Loaded and Resumed")
-                            break
+                        self.load_game()
+                        self.game_paused = False
+                        self._is_game_running = True
+                        time_last = pygame.time.get_ticks()
+                        logger.info("Game Loaded and Resumed")
+                        continue
 
-            if self.is_game_paused():
+            if self.game_paused:
                 self.draw_pause_screen()
                 pygame.display.flip()
                 continue
@@ -124,10 +103,10 @@ class Main(Observer):
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
                             gameover_loop = False
-                            self.set_stop_game()
+                            self._is_game_running = False
                         if event.type == pygame.KEYDOWN:
                             gameover_loop = False
-                            self.set_stop_game()
+                            self._is_game_running = False
                     time.sleep(0.01)
 
         logger.info("Quitted game")
@@ -148,7 +127,7 @@ class Main(Observer):
             self.ufo_controller.update_ufo(self.controller.ufo, self.game, delta_milisec)
 
         for controller in self.alien_controllers:
-            if controller.get_alien() in self.game.game_objects:
+            if controller._alien in self.game.game_objects:
                 controller.game_update(self.game, delta_milisec)
             else:
                 self.alien_controllers.remove(controller)
